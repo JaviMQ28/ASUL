@@ -10,7 +10,7 @@ computers=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\
   }egx
 ' | awk -F ';' '{print($4)}' | sort -u)
 
-echo $computers
+#echo $computers
 
 # IPsV4
 ip4s=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -\ MODIFICADO.csv| perl -pe '
@@ -21,7 +21,7 @@ ip4s=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -
   }egx
 ' | awk -F ';' '{print($5)}' | sort -u)
 
-echo $ip4s
+#echo $ip4s
 
 # IPsV6
 ip6s=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -\ MODIFICADO.csv| perl -pe '
@@ -32,7 +32,7 @@ ip6s=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -
   }egx
 ' | awk -F ';' '{print($6)}' | sort -u)
 
-echo $ip6s
+#echo $ip6s
 
 # Usuarios
 users=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -\ MODIFICADO.csv| perl -pe '
@@ -43,7 +43,7 @@ users=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ 
   }egx
 ' | awk -F ';' '{print($7)}' | sort -u | tr -d '"' | tr -d ',' | tr '\n' ' ')
 
-echo $users
+#echo $users
 
 # Llaves ssh publicas
 keys=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -\ MODIFICADO.csv| perl -pe '
@@ -54,7 +54,7 @@ keys=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -
   }egx
 ' | awk -F ';' '{print($8)}' | sort -u | tr -d '"' | tr ',' '\n')
 
-echo $keys
+#echo $keys
 
 # Nombres de host
 host1=$(echo "$computers" | head -n 1)
@@ -71,31 +71,35 @@ host9=$(echo "$computers" | sed -n '9p')
 declare -A host_table
 
 # Asignar valores al arreglo
-host_table["eq1"]=$host1
-host_table["eq2"]=$host2
-host_table["eq3"]=$host3
-host_table["eq4"]=$host4
-host_table["eq5"]=$host5
-host_table["eq6"]=$host6
-host_table["eq7"]=$host7
-host_table["eq8"]=$host8
-host_table["eq9"]=$host9
+host_table["eq1"]="$host1"
+host_table["eq2"]="$host2"
+host_table["eq3"]="$host3"
+host_table["eq4"]="$host4"
+host_table["eq5"]="$host5"
+host_table["eq6"]="$host6"
+host_table["eq7"]="$host7"
+host_table["eq8"]="$host8"
+host_table["eq9"]="$host9"
 
 table="hosts.csv"
 if [ -f "$table" ]; then
     echo "* La tabla de hosts ($table) ya existe"
+    # Recorrer todos los elementos
+    echo -e "--- Tabla estatica de hosts ---"
+    for host in "${!host_table[@]}"; do
+	echo "$host => ${host_table[$host]}" 
+    done
+else
+    touch "$table"
+    # Recorrer todos los elementos
+    echo -e "\n--- Tabla estatica de hosts ---"
+    for host in "${!host_table[@]}"; do
+        echo "$host => ${host_table[$host]}" 
+        echo "$host, ${host_table[$host]}" >> "$table"
+    done
+    echo "La tabla se guardo en $table"
 fi
 
-# Recorrer todos los elementos
-echo -e "\n--- Tabla estatica de hosts ---"
-for host in "${!host_table[@]}"; do
-    echo "$host => ${host_table[$host]}" 
-    if [ ! -f "$table" ]; then
-    	echo "$host, ${host_table[$host]}" >> $table
-    fi
-done
-
-# Crear cuentas de usuario
 # Nombres de usuarios
 user1=$(echo "$users" | tr ' ' '\n' | head -n 1)
 user2=$(echo "$users" | tr ' ' '\n' | sed -n '2p')
@@ -158,14 +162,15 @@ user_table["$user26"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-rsa/ssh-rsa /' | 
 user_table["$user27"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-rsa/ssh-rsa /' | sed -E 's/^(ssh-rsa )([^ ]+?=+)(.+)$/\1\2 \3/' | sed -n '26p')
 
 # Recorrer todos los elementos
-echo -e "\nUsuarios:"
-for user in "${!user_table[@]}"; do
-    echo "$user => ${user_table[$user]}" 
-done
+#echo -e "\nUsuarios:"
+#for user in "${!user_table[@]}"; do
+    #echo "$user => ${user_table[$user]}" 
+#done
 
 # Convertir la lista de usuarios a un array
 read -r -a users_array <<< "$users"
 
+# Crear cuentas de usuario
 echo -e "\n--- Creacion de cuentas de usuario ---"
 for user in "${users_array[@]}"; do
     # Crear el usuario si no existe
@@ -182,6 +187,7 @@ for user in "${users_array[@]}"; do
     fi
 done
 
+# Actualizar llaves publicas
 echo -e "\n--- Configuracion de llave publica ---"
 for user in "${users_array[@]}"; do
     # Crear directorio .ssh y agregar llave
@@ -197,11 +203,3 @@ for user in "${users_array[@]}"; do
 	echo "* El usuario $user ya fue configurado con su llave"
     fi
 done
-
-#for user in "${users_array[@]}"; do
-    # Eliminar el usuario
-    #if id "$user" &>/dev/null; then
-        #echo "Eliminando usuario $user..."
-        #sudo userdel -r "$user"
-    #fi
-#done
