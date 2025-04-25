@@ -144,9 +144,9 @@ user_table["$user8"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-rsa/ssh-rsa /' | s
 user_table["$user9"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-rsa/ssh-rsa /' | sed -E 's/^(ssh-rsa )([^ ]+?=+)(.+)$/\1\2 \3/' | sed -n '9p')
 user_table["$user10"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-rsa/ssh-rsa /' | sed -E 's/^(ssh-rsa )([^ ]+?=+)(.+)$/\1\2 \3/' | sed -n '15p')
 user_table["$user11"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-rsa/ssh-rsa /' | sed -E 's/^(ssh-rsa )([^ ]+?=+)(.+)$/\1\2 \3/' | sed -n '16p')
-user_table["$user12"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-ed25519/ssh-ed25519 /' | sed -E 's/^(ssh-ed25519 )([^ ]+?=+)(.+)$/\1\2 \3/' | sed -n '1p')
-user_table["$user13"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-ed25519/ssh-ed25519 /' | sed -E 's/^(ssh-ed25519 )([^ ]+?=+)(.+)$/\1\2 \3/' | sed -n '2p')
-user_table["$user14"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-ed25519/ssh-ed25519 /' | sed -E 's/^(ssh-ed25519 )([^ ]+?=+)(.+)$/\1\2 \3/' | sed -n '3p')
+user_table["$user12"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-ed25519/ssh-ed25519 /' | sed 's/userHola/ userHola/' | sed -n '1p')
+user_table["$user13"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-ed25519/ssh-ed25519 /' | sed 's/rafa@ggDebian/ rafa@ggDebian/' | sed -n '2p')
+user_table["$user14"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-ed25519/ssh-ed25519 /' | sed 's/maw@ggDebian/ maw@ggDebian/' | sed -n '3p')
 user_table["$user15"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-rsa/ssh-rsa /' | sed -E 's/^(ssh-rsa )([^ ]+?=+)(.+)$/\1\2 \3/' | sed -n '14p')
 user_table["$user16"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-rsa/ssh-rsa /' | sed -E 's/^(ssh-rsa )([^ ]+?=+)(.+)$/\1\2 \3/' | sed -n '11p')
 user_table["$user17"]=$(echo "$keys" | tr -d ' ' | sed 's/^ssh-rsa/ssh-rsa /' | sed -E 's/^(ssh-rsa )([^ ]+?=+)(.+)$/\1\2 \3/' | sed -n '12p')
@@ -203,3 +203,14 @@ for user in "${users_array[@]}"; do
 	echo "* El usuario $user ya fue configurado con su llave"
     fi
 done
+
+# Comentario multilinea
+: <<'END'
+for user in "${users_array[@]}"; do
+    # Eliminar el usuario
+    if id "$user" &>/dev/null; then
+        echo "Eliminando usuario $user..."
+        sudo userdel -r "$user"
+    fi
+done
+END
