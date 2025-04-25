@@ -203,14 +203,3 @@ for user in "${users_array[@]}"; do
 	echo "* El usuario $user ya fue configurado con su llave"
     fi
 done
-
-# Comentario multilinea
-: <<'END'
-for user in "${users_array[@]}"; do
-    # Eliminar el usuario
-    if id "$user" &>/dev/null; then
-        echo "Eliminando usuario $user..."
-        sudo userdel -r "$user"
-    fi
-done
-END
