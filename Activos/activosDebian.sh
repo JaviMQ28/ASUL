@@ -10,7 +10,7 @@ computers=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\
   }egx
 ' | awk -F ';' '{print($4)}' | sort -u)
 
-echo $computers
+#echo $computers
 
 # IPsV4
 ip4s=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -\ MODIFICADO.csv| perl -pe '
@@ -21,7 +21,7 @@ ip4s=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -
   }egx
 ' | awk -F ';' '{print($5)}' | sort -u)
 
-echo $ip4s
+#echo $ip4s
 
 # IPsV6
 ip6s=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -\ MODIFICADO.csv| perl -pe '
@@ -32,7 +32,7 @@ ip6s=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -
   }egx
 ' | awk -F ';' '{print($6)}' | sort -u)
 
-echo $ip6s
+#echo $ip6s
 
 # Usuarios
 users=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -\ MODIFICADO.csv| perl -pe '
@@ -41,9 +41,9 @@ users=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ 
   }{
     $& eq "," ? ";" : $&
   }egx
-' | awk -F ';' '{print($7)}' | sort -u | tr -d '"' | tr ',' ' ')
+' | awk -F ';' '{print($7)}' | sort -u | tr -d '"' | tr -d ',' | tr '\n' ' ')
 
-echo $users
+#echo $users
 
 # Llaves ssh publicas
 keys=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -\ MODIFICADO.csv| perl -pe '
@@ -52,18 +52,18 @@ keys=$(tail -n +2 ASUL\ 25-1\ Datos\ debian\ -\ Respuestas\ de\ formulario\ 1\ -
   }{
     $& eq "," ? ";" : $&
   }egx
-' | awk -F ';' '{print($8)}' | sort -u | tr -d '"' | tr ',' ' ')
+' | awk -F ';' '{print($8)}' | sort -u | tr -d '"' | tr ',' '\n')
 
-echo $keys
+#echo $keys
 
 
 # Verificar computadoras que estan activas
-file="activas.txt"
+file="activos.txt"
 
 # Limpiar archivo
 > "$file"
 
-echo ""
+echo "--- Computadoras activas ---"
 echo "--- Computadoras activas ---" >> "$file"
 actives=()
 
@@ -76,3 +76,32 @@ for ip in $ip4s; do
 	echo "No activa: $ip"
     fi
 done
+
+echo -e "\n--- Usuarios conectados ---"
+echo -e "\n--- Usuarios conectados ---" >> "$file"
+
+# Usuario que se usara para conectarse
+ssh_user="javiermq"
+
+# Iterar sobre IPs activas
+for ip in "${actives[@]}"; do
+    echo "Verificando IP: $ip"
+    ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no "$ssh_user@$ip" 'who' 2>/dev/null | while read -r line; do
+        user=$(echo "$line" | awk '{print $1}')
+        login_from=$(echo "$line" | grep -oP "\(.*?\)" | tr -d '()')
+        echo "Usuario conectado: $user desde $login_from"
+	echo "$user" >> "$file"
+    done
+done
+
+echo -e "\n--- Tiempo del sistema activo ---"
+echo -e "\n--- Tiempo del sistema activo ---" >> "$file"
+
+# Iterar sobre IPs activas
+for ip in "${actives[@]}"; do
+    tiempo_activo=$(ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no "$ssh_user@$ip" 'uptime -p' 2>/dev/null)
+    echo "$ip ($ssh_user): $tiempo_activo"
+    echo "$ip ($ssh_user): $tiempo_activo" >> "$file"
+done
+
+echo -e "\n * Se ha guardado la informacion en $file"
